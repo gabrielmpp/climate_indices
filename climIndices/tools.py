@@ -45,13 +45,13 @@ def get_data(index, source = 'NOAA'):
 
     call(["curl","-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
     flen = file_len('temp.txt')
-    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0,flen-1])
+    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0,flen-1, flen-2])
     call(['rm', 'temp.txt'])
-    df = format_data(df)
+    df = format_data(df, index)
     return df
 
 
-def format_data(df):
+def format_data(df, index):
     colnames=['year']
     [colnames.append(i) for i in range(1,13)]
     df.columns=colnames
@@ -63,14 +63,14 @@ def format_data(df):
     df = df.replace('-99.99', np.NaN)
     df = df.dropna()
 
-    print(df)
-    print('{year}-{month}-31'.format(year=df['year'].iloc[-1], month=df['month'].iloc[-1]))
-    indexes = pd.date_range(start='{year}-{month}-01'.format(year=df['year'].iloc[0], month=df['month'].iloc[0]),
-                            end='{year}-{month}-31'.format(year=df['year'].iloc[-1], month=df['month'].iloc[-1]),freq='M')
-    print(indexes)
+    indexes = pd.date_range(start='{year:0d}-{month}-01'.format(year=int(df['year'].iloc[0]), month=int(df['month'].iloc[0])),
+                            end='{year:0d}-{month}-31'.format(year=int(df['year'].iloc[-1]), month=int(df['month'].iloc[-1])),freq='M')
     df['time']=indexes
-    df = df.set_index(time)
-    df=df.dropna()
+    df = df.set_index('time')
+    df = df.drop(['month','year'], axis=1)
+    df.columns = [index]
+    df = df.replace(-99.99, np.NaN)
+    df = df.dropna()
     return df
 
 if __name__=='__main__':
