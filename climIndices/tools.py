@@ -45,7 +45,7 @@ def get_data(index, source = 'NOAA'):
 
     call(["curl","-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
     flen = file_len('temp.txt')
-    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0,flen-1, flen-2])
+    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0],error_bad_lines=True)
     call(['rm', 'temp.txt'])
     df = format_data(df, index)
     return df
