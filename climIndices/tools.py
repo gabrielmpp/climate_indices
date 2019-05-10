@@ -6,6 +6,8 @@ import requests
 import numpy as np
 import pandas as pd
 
+
+
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
@@ -45,13 +47,18 @@ def get_data(index, source = 'NOAA'):
 
     call(["curl","-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
     flen = file_len('temp.txt')
-    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0],error_bad_lines=False) 
+    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0], header = None)
+    df_nan = df[df.isnull().any(1)]
+    string_nan = df_nan.iloc[0,0]
+    print(string_nan)
+
+    df =df.dropna()
     call(['rm', 'temp.txt'])
-    df = format_data(df, index)
+    df = format_data(df, index, string_nan)
     return df
 
 
-def format_data(df, index):
+def format_data(df, index, string_nan):
     colnames=['year']
     [colnames.append(i) for i in range(1,13)]
     df.columns=colnames
@@ -60,8 +67,8 @@ def format_data(df, index):
     df = df.reset_index()
     df.columns = ['month','year','value']
     df = df.sort_values(['year','month'])
-    df = df.replace('-99.99', np.NaN)
-    df = df.dropna()
+    #df = df.replace('-99.99', np.NaN)
+    #df = df.dropna()
 
     indexes = pd.date_range(start='{year:0d}-{month}-01'.format(year=int(df['year'].iloc[0]), month=int(df['month'].iloc[0])),
                             end='{year:0d}-{month}-31'.format(year=int(df['year'].iloc[-1]), month=int(df['month'].iloc[-1])),freq='M')
@@ -69,7 +76,9 @@ def format_data(df, index):
     df = df.set_index('time')
     df = df.drop(['month','year'], axis=1)
     df.columns = [index]
-    df = df.replace(-99.99, np.NaN)
+    df[index] = df[index].astype(float)
+    df = df.replace(float(string_nan), np.NaN)
+
     df = df.dropna()
     return df
 
