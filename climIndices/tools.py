@@ -7,16 +7,17 @@ import numpy as np
 import pandas as pd
 
 
-
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
 
+
 def exists(URL):
     r = requests.head(URL)
     return r.status_code == requests.codes.ok
+
 
 def create_url(index, source):
     """
@@ -36,6 +37,7 @@ def create_url(index, source):
     base_url = base_url.format(index=index)
 
     return base_url
+
 
 def get_data(index, source = 'NOAA'):
     URL = create_url(index, source)
@@ -81,6 +83,7 @@ def format_data(df, index, string_nan):
 
     df = df.dropna()
     return df
+
 
 if __name__=='__main__':
     df = get_data('nina34')
