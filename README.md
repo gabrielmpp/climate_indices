@@ -3,8 +3,7 @@ Tools to download climate indices from NOAA (soi, qbo, pna etc) and format as Pa
 
 ## Installation 
 
->> pip install climate_indices
-
+>> pip install git+https://github.com/gabrielmpp/climate_indices
 ## Usage 
 
 >> import climIndices as ci
