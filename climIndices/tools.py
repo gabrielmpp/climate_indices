@@ -1,11 +1,9 @@
-import datetime
 from subprocess import call
 import os
-import sys
 import requests
 import numpy as np
 import pandas as pd
-
+from datetime import datetime
 
 def file_len(fname):
     with open(fname) as f:
@@ -39,27 +37,6 @@ def create_url(index, source):
     return base_url
 
 
-def get_data(index, source = 'NOAA'):
-    URL = create_url(index, source)
-
-    if not exists(URL):
-        print(URL)
-        raise ValueError("This URL does not exist")
-
-
-    call(["curl","-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
-    flen = file_len('temp.txt')
-    df = pd.read_csv('temp.txt',sep='\s+', skiprows=[0], header = None)
-    df_nan = df[df.isnull().any(1)]
-    string_nan = df_nan.iloc[0,0]
-    print(string_nan)
-
-    df =df.dropna()
-    call(['rm', 'temp.txt'])
-    df = format_data(df, index, string_nan)
-    return df
-
-
 def format_data(df, index, string_nan):
     colnames=['year']
     [colnames.append(i) for i in range(1,13)]
@@ -85,6 +62,35 @@ def format_data(df, index, string_nan):
     return df
 
 
+def get_data(indices, source='NOAA'):
+    df_list = []
+
+    def format_datetime(x):
+        return pd.Timestamp(datetime(day=1, month=x.month, year=x.year))
+
+    for index in indices:
+        URL = create_url(index, source)
+        if not exists(URL):
+            print(URL)
+            raise ValueError(f"URL does not exist for index {index}")
+        call(["curl", "-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
+        df = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
+        call(['rm', 'temp.txt'])
+        df_nan = df[df.isnull().any(1)]
+        string_nan = df_nan.iloc[0,0]
+        df = df.dropna()
+        df = format_data(df, index, string_nan)
+        df.index = [format_datetime(x) for x in df.index]
+        df_list.append(df)
+
+    df = pd.concat(df_list, axis=1)
+    return df
+
+
 if __name__=='__main__':
-    df = get_data('nina34')
-    print(df)
+    import matplotlib.pyplot as plt
+    plt.style.use('bmh')
+    df = get_data(['nina34', 'oni', 'nao', 'qbo'])
+    df.plot(subplots=True, sharex=True, title='Climate indices', legend='False', figsize=[10, 10])
+    plt.savefig('../figs/example.png')
+    plt.close()
