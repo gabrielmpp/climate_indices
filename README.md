@@ -18,4 +18,4 @@ Tools to download climate indices from NOAA (soi, qbo, pna etc) and format as Pa
 
 >> plt.show()
 
-<img src="https://github.com/gabrielmpp/climate_indices/blob/master/figs/example.png?raw=true" width="500">
+<img src="https://github.com/gabrielmpp/climate_indices/blob/master/figs/example.png?raw=true" width="800">
