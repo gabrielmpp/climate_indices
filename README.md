@@ -11,7 +11,7 @@ Tools to download climate indices from NOAA (soi, qbo, pna etc) and format as Pa
 import climIndices as ci
 import matplotlib.pyplot as plt
 
-df = get_data(['nina34', 'oni', 'nao', 'qbo'])
+df = ci.get_data(['nina34', 'oni', 'nao', 'qbo'])
 
 df.plot(subplots=True, sharex=True, title='Climate indices', legend='False', figsize=[10, 10])
 plt.show()
