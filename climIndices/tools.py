@@ -73,9 +73,13 @@ def get_data(indices, source='NOAA'):
         if not exists(URL):
             print(URL)
             raise ValueError(f"URL does not exist for index {index}")
+
         call(["curl", "-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
         df = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
-        call(['rm', 'temp.txt'])
+        try:
+            call(['rm', 'temp.txt'])
+        except:
+            print('Could not remove temp file.')
         df_nan = df[df.isnull().any(1)]
         string_nan = df_nan.iloc[0,0]
         df = df.dropna()
