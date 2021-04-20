@@ -27,7 +27,10 @@ def create_url(index, source):
     :return: sring
     """
     if source == 'NOAA':
-        base_url = 'https://psl.noaa.gov/data/correlation/{index}.anom.data'
+        if 'nina' in index:
+            base_url = 'https://psl.noaa.gov/data/correlation/{index}.anom.data'
+        else:
+            base_url = 'https://psl.noaa.gov/data/correlation/{index}.data'
 
     else:
         raise ValueError("Source not supported")
