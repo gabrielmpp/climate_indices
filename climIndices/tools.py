@@ -3,7 +3,11 @@ import os
 import requests
 import numpy as np
 import pandas as pd
+from pandas.errors import EmptyDataError
 from datetime import datetime
+from copy import deepcopy
+
+SOURCES = ['NOAA', 'CPC']
 
 def file_len(fname):
     with open(fname) as f:
@@ -31,7 +35,8 @@ def create_url(index, source):
             base_url = 'https://psl.noaa.gov/data/correlation/{index}.anom.data'
         else:
             base_url = 'https://psl.noaa.gov/data/correlation/{index}.data'
-
+    elif source == 'CPC':
+        base_url = 'https://www.cpc.ncep.noaa.gov/data/indices/req{index}.for'
     else:
         raise ValueError("Source not supported")
 
@@ -43,7 +48,7 @@ def create_url(index, source):
 def format_data(df, index, string_nan):
     colnames=['year']
     [colnames.append(i) for i in range(1,13)]
-    df.columns=colnames
+    df.columns = colnames
     df = df.set_index('year')
     df = df.unstack()
     df = df.reset_index()
@@ -66,19 +71,36 @@ def format_data(df, index, string_nan):
 
 
 def get_data(indices, source='NOAA'):
-    df_list = []
-
-    def format_datetime(x):
-        return pd.Timestamp(datetime(day=1, month=x.month, year=x.year))
-
-    for index in indices:
+    def download_df(index, source):
         URL = create_url(index, source)
         if not exists(URL):
             print(URL)
             raise ValueError(f"URL does not exist for index {index}")
 
         call(["curl", "-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
-        df = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
+
+    assert source in SOURCES, f'source {source} not valid.'
+    _sources = deepcopy(SOURCES)
+    df_list = []
+
+    def format_datetime(x):
+        return pd.Timestamp(datetime(day=1, month=x.month, year=x.year))
+
+    for index in indices:
+        download_df(index, source)
+        for source in _sources:
+            print(f'Trying source {source}')
+            try:
+                df = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
+            except EmptyDataError:
+                print("Data is empty, trying another source")
+                continue
+            else:
+                break
+        try:
+            df
+        except NameError:
+            raise Exception(f'ClimIndices could not download index {index}')
         try:
             call(['rm', 'temp.txt'])
         except:
