@@ -87,27 +87,30 @@ def get_data(indices, source='NOAA'):
         return pd.Timestamp(datetime(day=1, month=x.month, year=x.year))
 
     for index in indices:
-        download_df(index, source)
         for source in _sources:
             print(f'Trying source {source}')
+            download_df(index, source)
+
             try:
-                df = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
+                df_temp = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
             except EmptyDataError:
                 print("Data is empty, trying another source")
-                continue
             else:
                 break
         try:
-            df
+            df_temp
         except NameError:
             raise Exception(f'ClimIndices could not download index {index}')
         try:
             call(['rm', 'temp.txt'])
         except:
             print('Could not remove temp file.')
-        df_nan = df[df.isnull().any(1)]
-        string_nan = df_nan.iloc[0,0]
-        df = df.dropna()
+        if source == 'CPC':
+            string_nan = '999.9'
+        else:
+            df_nan = df_temp[df_temp.isnull().any(1)]
+            string_nan = df_nan.iloc[0,0]
+        df = df_temp.dropna()
         df = format_data(df, index, string_nan)
         df.index = [format_datetime(x) for x in df.index]
         df_list.append(df)
@@ -119,7 +122,7 @@ def get_data(indices, source='NOAA'):
 if __name__=='__main__':
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
-    df = get_data(['nina34', 'oni', 'nao', 'qbo'])
+    df = get_data(['nina34', 'soi'])
     df.plot(subplots=True, sharex=True, title='Climate indices', legend='False', figsize=[10, 10])
     plt.savefig('../figs/example.png')
     plt.close()
