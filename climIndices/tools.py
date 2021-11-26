@@ -96,7 +96,7 @@ def get_data(indices, source='NOAA'):
 
             try:
                 df_temp = pd.read_csv(TMP_FILE_PATH, sep='\s+', skiprows=[0], header=None)
-            except EmptyDataError:
+            except (EmptyDataError, FileNotFoundError):
                 print("Data is empty, trying another source")
             else:
                 break
