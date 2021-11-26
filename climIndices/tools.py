@@ -8,6 +8,9 @@ from datetime import datetime
 from copy import deepcopy
 
 SOURCES = ['NOAA', 'CPC']
+PID = os.getpid()
+TMP_FILE_PATH = os.environ['HOME'] + f'/temp_file_climIndices_{PID}.txt'
+
 
 def file_len(fname):
     with open(fname) as f:
@@ -77,7 +80,7 @@ def get_data(indices, source='NOAA'):
             print(URL)
             raise ValueError(f"URL does not exist for index {index}")
 
-        call(["curl", "-s", "-o", 'temp.txt', URL], stdout=open(os.devnull, 'wb'))
+        call(["curl", "-s", "-o", TMP_FILE_PATH, URL], stdout=open(os.devnull, 'wb'))
 
     assert source in SOURCES, f'source {source} not valid.'
     _sources = deepcopy(SOURCES)
@@ -92,7 +95,7 @@ def get_data(indices, source='NOAA'):
             download_df(index, source)
 
             try:
-                df_temp = pd.read_csv('temp.txt', sep='\s+', skiprows=[0], header=None)
+                df_temp = pd.read_csv(TMP_FILE_PATH, sep='\s+', skiprows=[0], header=None)
             except EmptyDataError:
                 print("Data is empty, trying another source")
             else:
@@ -102,7 +105,7 @@ def get_data(indices, source='NOAA'):
         except NameError:
             raise Exception(f'ClimIndices could not download index {index}')
         try:
-            call(['rm', 'temp.txt'])
+            call(['rm', TMP_FILE_PATH])
         except:
             print('Could not remove temp file.')
         if source == 'CPC':
@@ -123,6 +126,6 @@ if __name__=='__main__':
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
     df = get_data(['nina34', 'soi'])
-    df.plot(subplots=True, sharex=True, title='Climate indices', legend='False', figsize=[10, 10])
-    plt.savefig('../figs/example.png')
-    plt.close()
+    # df.plot(subplots=True, sharex=True, title='Climate indices', legend='False', figsize=[10, 10])
+    # plt.savefig('../figs/example.png')
+    # plt.close()
